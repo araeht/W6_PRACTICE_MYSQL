@@ -9,8 +9,8 @@ export default function ArticleForm({ isEdit }) {
   const [formData, setFormData] = useState({
     title: "",
     content: "",
-    journalist: "",
-    category: "",
+    journalistId: "",
+    categoryIds: "", // comma-separated string like "1,2,3"
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -27,7 +27,18 @@ export default function ArticleForm({ isEdit }) {
     setError("");
     try {
       const article = await getArticleById(id);
-      setFormData(article);
+      setFormData({
+        title: article.title,
+        content: article.content,
+        journalistId: article.journalistId,
+        categoryIds: article.categories
+          ? article.categories
+              .split(",")
+              .map((name) => name.trim())
+              .map((_, idx) => idx + 1)
+              .join(",")
+          : "",
+      });
     } catch (err) {
       setError("Failed to load article. Please try again.");
     } finally {
@@ -45,13 +56,23 @@ export default function ArticleForm({ isEdit }) {
     setError("");
 
     try {
+      const articleData = {
+        ...formData,
+        journalistId: Number(formData.journalistId),
+        categoryIds: formData.categoryIds
+          .split(",")
+          .map((id) => Number(id.trim())),
+      };
+
       if (isEdit) {
-        await updateArticle(id, formData);
+        await updateArticle(id, articleData);
       } else {
-        await createArticle(formData);
+        await createArticle(articleData);
       }
+
       navigate("/articles");
     } catch (err) {
+      console.log(err);
       setError("Failed to submit article.");
     } finally {
       setIsLoading(false);
@@ -82,23 +103,23 @@ export default function ArticleForm({ isEdit }) {
         />
         <br />
         <input
-          name="journalist"
-          value={formData.journalist}
+          name="journalistId"
+          value={formData.journalistId}
           onChange={handleChange}
           placeholder="Journalist ID"
           required
         />
         <br />
         <input
-          name="category"
-          value={formData.category}
+          name="categoryIds"
+          value={formData.categoryIds}
           onChange={handleChange}
-          placeholder="Category ID"
+          placeholder="Category IDs (comma-separated)"
           required
         />
         <br />
         <button className="main" type="submit">
-          {isEdit ? "Edit " : "Create"}
+          {isEdit ? "Edit" : "Create"}
         </button>
       </form>
     </>

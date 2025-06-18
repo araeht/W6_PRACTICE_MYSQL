@@ -1,24 +1,21 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getArticleById } from "../services/api";
 
 export default function ArticlePage() {
   const { id } = useParams();
-
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     fetchArticle();
-  }, []);
-
+  }, [id]);
 
   const fetchArticle = async () => {
     try {
       setLoading(true);
-
-      const found = getArticleById(id);
+      const found = await getArticleById(id);
       if (found) {
         setArticle(found);
         setError("");
@@ -42,11 +39,24 @@ export default function ArticlePage() {
       <h2>{article.title}</h2>
       <p>{article.content}</p>
       <div>
-        <strong>Journalist:</strong> {article.journalist}
+        <strong>Journalist:</strong>{" "}
+        <Link to={`/journalists/${article.journalistId}/articles`}>
+          {article.journalist}
+        </Link>
       </div>
+
       <div>
-        <strong>Category:</strong> {article.category}
+        <strong>Categories:</strong>{" "}
+        {article.categories
+          ? article.categories.split(",").map((cat, i) => (
+              <span key={i} style={{ marginRight: "5px" }}>
+                {cat.trim()}
+                {i < article.categories.split(",").length - 1 ? "," : ""}
+              </span>
+            ))
+          : "N/A"}
       </div>
     </div>
   );
 }
+
